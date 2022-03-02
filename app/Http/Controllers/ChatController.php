@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\SendMessage as EventsSendMessage;
 use App\Jobs\SendEmailJob;
 use App\Models\Chat;
 use App\Models\User;
@@ -19,7 +20,8 @@ class ChatController extends Controller
 
     public function room($userId){
         $user = User::findOrfail($userId);
-        $messages = Chat::where('chat_room_id', $userId)->orWhere('user_id', $userId)->get();
+        $messages = Chat::with(['senderUser', 'user'])->where('user_id', $userId)->orWhere('sender_id', Auth::user()->id)->get();
+        // dd($messages);
         return view('chat.room', compact('user', 'messages'));
     }
 
@@ -28,20 +30,21 @@ class ChatController extends Controller
         $user = User::findOrfail($userId);
         $chatData = [
             'user_id' => $userId,
-            'chat_room_id' => Auth::user()->id,
+            'sender_id' => Auth::user()->id,
             'message' => $message
         ];
         $chat = new Chat();
 
+
         if($chat = $chat->create($chatData)){
-            $messages = Chat::where('chat_room_id', Auth::user()->id)->where('user_id', $userId)->get();
+            $messages = Chat::where('sender_id', Auth::user()->id)->where('user_id', $userId)->get();
             $eventdata = [
                 'userName' => $user->name,
                 'message' =>$chat->message,
                 'messages' => $messages
             ];
+            event(new EventsSendMessage($eventdata, $userId));
             $details['email'] = $user->email;
-            event(new \App\Events\SendMessage($eventdata, $userId));
             dispatch(new SendEmailJob($details));
             return response()->json($eventdata);
         }

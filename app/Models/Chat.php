@@ -11,7 +11,15 @@ class Chat extends Model
 
     protected $fillable = [
         'user_id',
-        'chat_room_id',
+        'sender_id',
         'message',
     ];
+
+    public function senderUser(){
+        return $this->hasOne(User::class, 'id', 'sender_id');
+    }
+
+    public function user(){
+        return $this->hasOne(User::class, 'id', 'user_id');
+    }
 }

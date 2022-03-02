@@ -8,11 +8,17 @@
 
 
             @foreach ($messages as $message)
-                <div class="w-100 d-flex justify-content-start">
-                    <span>{{ $user->name }} :</span>
-                    <span >{{ $message->message }}</span> <br>
-
-                </div>
+                @if ($message->sender_id == Auth::user()->id)
+                    <div class="w-100 d-flex justify-content-start">
+                        <span>{{ $message->user->name }} :</span>
+                        <span >{{ $message->message }}</span> <br>
+                    </div>
+                @elseif($message->user_id == $user->id)
+                    <div class="w-100 d-flex justify-content-end">
+                        <span>{{ $message->senderUser->name }} :</span>
+                        <span >{{ $message->message }}</span> <br>
+                    </div>
+                @endif
             @endforeach
             <div class="message">
             </div>
@@ -49,7 +55,7 @@ $.ajaxSetup({
               console.log(message);
             message_text.val('')
             if(message) {
-                $('.message').append( `<div class="w-100 d-flex justify-content-start">
+                $('.message font-weigth-bold').append( `<div class="w-100 d-flex justify-content-start">
                     <span>${message.userName}:</span>
                     <span>${message.message}:</span>
                 </div>` );
@@ -64,7 +70,7 @@ $.ajaxSetup({
   </script>
 
 <script type="text/javascript">
-    window.Echo.channel('user-channel__'+"{{ Auth::user()->id }}")
+    window.Echo.channel('user-channel__'+'{{ Auth::user()->id }}')
         .listen('.UserEvent', ({message}) => {
             console.log(message);
             $('.message').append( `<div class="w-100 d-flex justify-content-start">
